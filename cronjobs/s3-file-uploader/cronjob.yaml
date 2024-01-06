@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: s3-file-uploader
+  namespace: default
+spec:
+  timeZone: 'Europe/Istanbul'
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: s3-file-uploader
+            image: CHANGAME
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - name: logs
+              mountPath: /logs
+            - name: aws-cli-config
+              mountPath: /root/.aws/config
+              subPath: config
+            - name: aws-cli-credentials
+              mountPath: /root/.aws/credentials
+              subPath: credentials
+            command:
+            - /bin/sh
+            - -c
+            - find /logs -type d -name archived -exec aws s3 mv --recursive {} s3://yourbucket/{} \;
+          imagePullSecrets:
+          - name: CHANGAME
+          restartPolicy: OnFailure
+          volumes:
+          - name: logs
+            persistentVolumeClaim:
+              claimName: logs
+          - name: aws-cli-config
+            configMap:
+              name: aws-cli-config
+          - name: aws-cli-credentials
+            secret:
+              secretName: aws-cli-credentials

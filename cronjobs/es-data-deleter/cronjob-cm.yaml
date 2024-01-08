@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: es-data-deleter-shell-script
+  namespace: default
+data:
+  es-data-deleter.sh: |
+    curl -k -X POST https://elastic-es-http:9200/.ds-logs*/_delete_by_query?pretty -H 'Content-Type: application/json' -H 'Authorization: ApiKey $EC_API_KEY' -d '{"query":{"range":{"@timestamp":{"lte":"now-15d"}}}}'

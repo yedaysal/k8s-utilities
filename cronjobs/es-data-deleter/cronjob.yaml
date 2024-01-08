@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: es-data-deleter
+  namespace: default
+spec:
+  timeZone: 'Europe/Istanbul'
+  schedule: "0 12 * * *"
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 10
+      template:
+        spec:
+          containers:
+          - name: es-data-deleter
+            image: nexus.cyangate.com/alpinelinux/curl:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - /usr/local/bin/es-data-deleter.sh
+            volumeMounts:
+            - name: es-data-deleter-shell-script
+              mountPath: /usr/local/bin/es-data-deleter.sh
+              subPath: es-data-deleter.sh
+          imagePullSecrets:
+          - name: nexuscyangate
+          restartPolicy: OnFailure
+          volumes:
+          - name: es-data-deleter-shell-script
+            configMap:
+              name: es-data-deleter-shell-script
+              defaultMode: 0511
